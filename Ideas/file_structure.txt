@@ -1,0 +1,3 @@
+.config/spot_companion/
+    credentials.env
+    token.txt

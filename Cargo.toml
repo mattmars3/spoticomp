@@ -1,0 +1,45 @@
+[package]
+name = "spotify_comp"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# for reading the dotenv credentials
+dotenv = "0.15.0"
+
+# you think I wouldn't put this one in here
+tokio = {version = "1.26.0", features = ["full"]}
+
+# spotify library stuff
+rspotify = {version = "0.11.6", features = ["env-file", "cli"]}
+#rspotify = {version = "0.11.6", default-features = false, features = ["client-ureq", "ureq-rustls-tls", "env-file", "cli"]}
+rspotify-model = "0.11.6"
+
+# env logger for rspotify features
+env_logger = "0.10.0"
+
+# create random state strings for authentication
+random-string = "1.0.0"
+
+chrono = "0.4.24"
+
+# genius lyrics
+genius-rust = "0.1.1"
+
+# json support
+serde_json = "1.0.94"
+
+# ui library
+# MUST HAVE NCURSES INSTALLED
+cursive = "0.20.0"
+
+# for image utilities
+image = "0.24.6"
+
+# request library for downloading images
+reqwest = "0.11.14"
+
+# TEMPORARY LIBRARY
+show-image = "0.13.1"

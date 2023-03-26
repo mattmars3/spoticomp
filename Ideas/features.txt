@@ -1,0 +1,27 @@
+Features
+    Album Art
+        Gif creator of album art
+            Create Gif of a playlist
+            Create Gif of "x" number of recently played songs
+            make the colors flow into eachother (transitions)
+        Stable Diffusion upscaler of album art
+            upscale gifs to a certain resolution
+        Pixel art Album creator
+            8 bit colors
+
+    Passcode
+        pin system that hashes the pin and compares decrypts the authentication token
+            decrypt another string and compare it to a known string to see if correct. 
+                Rather than sending request to confirm
+
+    History Tracker
+        Most popular location in album in history (most played track is the fourth on an album)
+        Other random stats
+
+    Lyrics
+        Get lyrics of currently playing song
+
+
+
+
+
