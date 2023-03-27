@@ -1,3 +1,5 @@
+use std::fs;
+
 use rspotify::{AuthCodeSpotify};
 use rspotify_model::{PlayableItem, FullTrack};
 use crate::popular_endpoints;
@@ -5,8 +7,7 @@ use crate::popular_endpoints;
 // clean up this import
 use image::{*};
 
-// TEMPORARY FEATURE!!!!
-use show_image::{ImageView, ImageInfo, create_window};
+const IMAGE_DIR: &str = "ImageAssets/";
 
 // downloads album art for song
 pub async fn download_album_art(song_playing: FullTrack) {
@@ -21,3 +22,9 @@ pub async fn download_album_art(song_playing: FullTrack) {
     image.save_with_format(file_name, image::ImageFormat::Png);
 }
 
+// deletes all the art work in image assets folder
+pub fn clear_image_assets() {
+    for entry in fs::read_dir(IMAGE_DIR).unwrap() {
+        fs::remove_file(entry.unwrap().path());
+    }
+}

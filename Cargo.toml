@@ -40,6 +40,3 @@ image = "0.24.6"
 
 # request library for downloading images
 reqwest = "0.11.14"
-
-# TEMPORARY LIBRARY
-show-image = "0.13.1"

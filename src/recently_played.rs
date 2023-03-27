@@ -7,7 +7,12 @@ use chrono::{DateTime, Utc, TimeZone, Duration};
 use serde_json::{to_string, to_string_pretty};
 
 // for writing json data to file
-use std::fs::{File, write};
+use std::fs::{File, write, read_to_string};
+
+// make this a config file thing
+// check if the file exists first
+const RECENT_SONG_PATH: &str = "Assets/recently_played_songs.json";
+const PLAYED_TIMES_REF: &str = "Assets/songs_play_times.json";
 
 pub async fn get_all_recently_played(spotify_object: &AuthCodeSpotify) -> Vec<PlayHistory> {
     // internal function
@@ -58,16 +63,41 @@ pub async fn get_all_recently_played(spotify_object: &AuthCodeSpotify) -> Vec<Pl
 
 
 // takes a vector of playhistory and turns it all into json
-pub async fn recently_played_to_json(played_songs: Vec<PlayHistory>) -> String {
+pub async fn playhistory_to_json(played_songs: Vec<PlayHistory>) -> String {
     let songs_json = serde_json::to_string_pretty(&played_songs);
     songs_json.expect("unable to unwrap songs and parse to json")
 }
 
 // takes in a string of recently_played songs and writes them to a file
 pub fn write_json(rec_played_string: String) {
-    let file_name = "recent_played_songs.json";
-    write(file_name, rec_played_string).unwrap();
+    write(RECENT_SONG_PATH, rec_played_string).unwrap();
 }
+
+pub async fn update_recently_played_songs(spotify_object: &AuthCodeSpotify) {
+    let rec_played_songs = read_songs_from_recent_file();
+    let api_recent_songs = get_all_recently_played(spotify_object).await;
+
+    // create a list of times where songs were played
+    for song in rec_played_songs {
+         
+    }
+
+}
+
+// NOTE this does not include the current playing song
+pub async fn get_last_songs_played(spotify_object: &AuthCodeSpotify, num_of_songs: i32) -> Vec<PlayHistory> {
+    let now_spotify_time: Option<TimeLimits> = Some(TimeLimits::Before(Utc::now()));
+    let songs = spotify_object.current_user_recently_played(Some(num_of_songs as u32), now_spotify_time).await;
+    songs.expect("Couldn't unwrap cursor based page").items
+}
+
+pub fn read_songs_from_recent_file() -> Vec<PlayHistory> {
+    let json_data: String = std::fs::read_to_string(RECENT_SONG_PATH).expect("Unable to read songs from recently played file");
+    let vec_of_songs: Vec<PlayHistory> = serde_json::from_str(&json_data).unwrap();
+    vec_of_songs
+}
+
+
 
 /* functions to have
  * get all recently played songs
