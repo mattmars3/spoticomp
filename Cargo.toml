@@ -40,3 +40,6 @@ image = "0.24.6"
 
 # request library for downloading images
 reqwest = "0.11.14"
+
+# threadpools for downloading images 
+rayon = "1.7.0"

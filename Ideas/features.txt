@@ -4,8 +4,10 @@ Features
             Create Gif of a playlist
             Create Gif of "x" number of recently played songs
             make the colors flow into eachother (transitions)
+
         Stable Diffusion upscaler of album art
             upscale gifs to a certain resolution
+
         Pixel art Album creator
             8 bit colors
 
@@ -15,11 +17,15 @@ Features
                 Rather than sending request to confirm
 
     History Tracker
-        Most popular location in album in history (most played track is the fourth on an album)
+        Most popular location in album in history 
+            (most played track is the fourth on an album)
         Other random stats
 
     Lyrics
         Get lyrics of currently playing song
+
+    
+    Configuration done through a YAML or JSON file
 
 
 

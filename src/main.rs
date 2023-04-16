@@ -1,6 +1,5 @@
 use rspotify::{AuthCodeSpotify, prelude::*};
 
-
 use rspotify_model::{FullTrack, PlayHistory};
 // for main function
 use tokio::main;
@@ -17,20 +16,30 @@ mod ui;
 #[tokio::main]
 async fn main() {
     let spotify = authorize::get_authcode().await;
-    // let song = popular_endpoints::current_playing_fulltrack(&spotify).await.expect("No song playing");
-    // album_cover::download_album_art(song).await;
-    // album_cover::clear_image_assets();
-
-    let last_songs = recently_played::get_all_recently_played(&spotify).await;
-    recently_played::write_json(recently_played::playhistory_to_json(last_songs).await);
     
-    let songs: Vec<PlayHistory> = recently_played::read_songs_from_recent_file();
-    for song in songs {
-        println!("{}", song.track.name);
-    }
-
-     
-
+    let rec_played = recently_played::get_all_recent_songs(&spotify).await;
+    album_cover::download_album_art_from_vec(rec_played, 0).await;
 }
 
+async fn image_test(spotify_object: &AuthCodeSpotify) {
+    let song = popular_endpoints::current_playing_fulltrack(&spotify_object).await.expect("No song playing");
+    // 0 lowest, 2 best
+    album_cover::download_album_art(song, 1).await;
+    // album_cover::clear_image_assets();
+}
 
+async fn download_hella_pictures(spotify_object: &AuthCodeSpotify) {
+    for song in recently_played::get_all_recent_songs(spotify_object).await {
+        album_cover::download_album_art(song.track, 0).await;
+    }
+}
+
+async fn get_rec_played_count(spotify_object: &AuthCodeSpotify, print_songs: bool) {
+    let songs = recently_played::get_all_recent_songs(spotify_object).await;
+    if print_songs {
+        for song in &songs {
+            println!("{}", song.track.name);
+        }
+    }
+    println!("{} total songs.", songs.len());
+}

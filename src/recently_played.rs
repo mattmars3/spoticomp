@@ -1,7 +1,11 @@
+// for authrorization
 use crate::authorize;
 use rspotify::{prelude::*, AuthCodeSpotify};
 use rspotify_model::{TimeLimits, PlayHistory};
 use chrono::{DateTime, Utc, TimeZone, Duration};
+
+// for hashmap in the update file function
+use std::collections::HashMap;
 
 // for turning songs into json
 use serde_json::{to_string, to_string_pretty};
@@ -11,18 +15,24 @@ use std::fs::{File, write, read_to_string};
 
 // make this a config file thing
 // check if the file exists first
-const RECENT_SONG_PATH: &str = "Assets/recently_played_songs.json";
+const RECENT_SONG_PATH: &str = "recently_played_songs.json";
 const PLAYED_TIMES_REF: &str = "Assets/songs_play_times.json";
 
-pub async fn get_all_recently_played(spotify_object: &AuthCodeSpotify) -> Vec<PlayHistory> {
-    // internal function
+// NOTE this does not include the current playing song
+// gets last x songs
+pub async fn get_x_recent_songs(spotify_object: &AuthCodeSpotify, num_of_songs: i32) -> Vec<PlayHistory> {
+    let now_spotify_time: Option<TimeLimits> = Some(TimeLimits::Before(Utc::now()));
+    let songs = spotify_object.current_user_recently_played(Some(num_of_songs as u32), now_spotify_time).await;
+    songs.expect("Couldn't unwrap cursor based page").items
+}
+
+pub async fn get_all_recent_songs(spotify_object: &AuthCodeSpotify) -> Vec<PlayHistory> {
     fn get_after_newest_song_datetime(songs: &Vec<PlayHistory>) -> DateTime<Utc> {
-        // get the newest song datetime
         let mut newest_song = songs.get(0).unwrap();
         for song in songs {
             if song.played_at > newest_song.played_at {newest_song = song;}
         }
-        // println!("{:?}: {}", newest_song.track.name, newest_song.played_at);
+
         let after_newest = newest_song.played_at + Duration::nanoseconds(1);
         after_newest
     }
@@ -35,10 +45,11 @@ pub async fn get_all_recently_played(spotify_object: &AuthCodeSpotify) -> Vec<Pl
         recent_played.items
     }
 
-    // declare super old datetime
-    let limit = 1u32;
-    // this should check the json file and see what the newest time is and set that as the oldest
+    // amount of songs to request per req
+    let limit = 4u32;
+    // old datetime counter so that all songs in recent played will be after it
     let mut datetime_counter: DateTime<Utc> = Utc.with_ymd_and_hms(2020, 1, 1, 1, 1, 1).unwrap();
+
     let mut playhistory_vector: Vec<PlayHistory> = vec![];
 
     // loop and get all recently played songs
@@ -61,50 +72,79 @@ pub async fn get_all_recently_played(spotify_object: &AuthCodeSpotify) -> Vec<Pl
     playhistory_vector
 }
 
-
-// takes a vector of playhistory and turns it all into json
-pub async fn playhistory_to_json(played_songs: Vec<PlayHistory>) -> String {
-    let songs_json = serde_json::to_string_pretty(&played_songs);
-    songs_json.expect("unable to unwrap songs and parse to json")
-}
-
 // takes in a string of recently_played songs and writes them to a file
-pub fn write_json(rec_played_string: String) {
+pub fn write_to_file(played_songs: Vec<PlayHistory>) {
+    let songs_json = serde_json::to_string_pretty(&played_songs);
+    let rec_played_string = songs_json.expect("unable to unwrap songs and parse to json");
     write(RECENT_SONG_PATH, rec_played_string).unwrap();
 }
 
-pub async fn update_recently_played_songs(spotify_object: &AuthCodeSpotify) {
-    let rec_played_songs = read_songs_from_recent_file();
-    let api_recent_songs = get_all_recently_played(spotify_object).await;
-
-    // create a list of times where songs were played
-    for song in rec_played_songs {
-         
-    }
-
-}
-
-// NOTE this does not include the current playing song
-pub async fn get_last_songs_played(spotify_object: &AuthCodeSpotify, num_of_songs: i32) -> Vec<PlayHistory> {
-    let now_spotify_time: Option<TimeLimits> = Some(TimeLimits::Before(Utc::now()));
-    let songs = spotify_object.current_user_recently_played(Some(num_of_songs as u32), now_spotify_time).await;
-    songs.expect("Couldn't unwrap cursor based page").items
-}
-
-pub fn read_songs_from_recent_file() -> Vec<PlayHistory> {
+pub fn read_from_file() -> Vec<PlayHistory> {
     let json_data: String = std::fs::read_to_string(RECENT_SONG_PATH).expect("Unable to read songs from recently played file");
     let vec_of_songs: Vec<PlayHistory> = serde_json::from_str(&json_data).unwrap();
     vec_of_songs
 }
 
+// gets all songs from the recently played 
+pub async fn file_and_api_recently_played(spotify_object: &AuthCodeSpotify) -> Vec<PlayHistory> {
+    let mut file_recent_songs: Vec<PlayHistory> = read_from_file();
+    let api_recent_songs = get_all_recent_songs(spotify_object).await;
+
+    let mut file_played_at_times: Vec<DateTime<Utc>> = vec![];
+
+    // create a list of times where songs were played
+    for song in &file_recent_songs {
+        file_played_at_times.push(song.played_at);
+    }
 
 
-/* functions to have
- * get all recently played songs
- *      gets from the API
- * write the recently played songs to a json file
- *      rectifies changes between them
- * get lifetime played songs
- *      reads from the json file
- * 
+    // if a song has the same DateTime, you know it is a duplicate because there's no way it would
+    // be the exact same time
+    for song in api_recent_songs {
+        // if it is not already in the file
+        if !file_played_at_times.contains(&song.played_at) {
+            // append it to the vector 
+            // there is probably an ownership bug here lmao
+            file_recent_songs.push(song);
+        }
+    }
+
+    // return updated list
+    file_recent_songs
+}
+
+pub async fn update_recently_played(spotify_object: &AuthCodeSpotify) {
+    // get the file and api recently played songs
+    let file_and_recent_played = file_and_api_recently_played(spotify_object).await;
+    println!("{} songs recorded in history.", file_and_recent_played.len());
+    write_to_file(file_and_recent_played);
+}
+
+
+
+/* Functions
+ *
+ *  get x number of recently_played_songs
+ *  get all recently played songs
+ *
+ *  turn PlayHistory vector into json 
+ *  write json to file
+ *
+ *  read json from file
+ *  turn json into PlayHistory
+ *
+ *  check for current playing song
+ *
+ *
+    get_x_recent_songs
+    get_all_recent_songs
+
+    song_vec_to_json
+    json_to_song_vec
+
+    write_to_file
+    read_from_file
+ *
+ *
  * */
+
