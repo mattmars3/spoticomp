@@ -15,7 +15,7 @@ use std::fs::{File, write, read_to_string};
 
 // make this a config file thing
 // check if the file exists first
-const RECENT_SONG_PATH: &str = "recently_played_songs.json";
+const RECENT_SONG_PATH: &str = "Assets/recently_played_songs.json";
 const PLAYED_TIMES_REF: &str = "Assets/songs_play_times.json";
 
 // NOTE this does not include the current playing song

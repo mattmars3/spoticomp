@@ -1,34 +1,37 @@
+// threading used in some functions
 use std::{fs, thread::JoinHandle};
 
-use rspotify::{AuthCodeSpotify};
-use rspotify_model::{PlayableItem, FullTrack, PlayHistory};
-use crate::popular_endpoints;
+// Types for Parameters
+use rspotify_model::{FullTrack, PlayHistory};
 
-use std::thread;
-
+// imports for image manipulation and saving
 // clean up this import
 use image::{ImageFormat, load_from_memory, codecs::gif, Frame, Delay, ImageBuffer};
 
-const IMAGE_DIR: &str = "./Assets/Images/";
+use crate::configuration::{get_config_value, get_image_dir, self};
 
 // downloads album art for song
-pub async fn download_album_art(spotify_track: FullTrack, quality: i32) {
+pub async fn download_album_art(spotify_track: &FullTrack, quality: i32) {
+    // ensure that quality is within range
     if quality < 0 || quality > 2 {
         panic!("Quality rating for download_album_art must be 0, 1, or 2");
     }
     
     // get the url for the proper image
-    let images = spotify_track.album.images;
-    let im1 = images.get(quality as usize).unwrap().url.clone();
+    let image_urls = &spotify_track.album.images;
+    let image_url = image_urls.get(quality as usize).unwrap().url.clone();
 
     // send a request to download the image
-    let img_bytes = reqwest::get(&im1).await.unwrap().bytes().await.unwrap();
-    let image = load_from_memory(&img_bytes).unwrap();
+    let image_request_bytes = reqwest::get(&image_url).await.unwrap().bytes().await.unwrap();
+    let image = load_from_memory(&image_request_bytes).unwrap();
 
+    // create base_path
+    let base_path = format!("{}{}", configuration::get_config_value("assets_path"), "Images/");
     // create the file name
-    let file_name = format!("{}{}.png", IMAGE_DIR, spotify_track.id.unwrap().to_string());
+    let file_name = format!("{}{}-{}.png", base_path, spotify_track.name.to_string(), spotify_track.artists.get(0).unwrap().name).chars().filter(|c| *c != ' ').collect::<String>();
+    println!("Saving image as {}", &file_name);
 
-    // handle file errors
+    // handle file errors and save the image
     match image.save_with_format(file_name, image::ImageFormat::Png) {
         Ok(_) => (),
         Err(e) => println!("{}", e),
@@ -42,6 +45,7 @@ pub fn background_from_library() {
     // let mut im: ImageBuffer<_, Vec<_>> = ImageBuffer::new(width, height);
 }
 
+/*
 pub async fn download_album_art_from_vec(spotify_tracks: Vec<PlayHistory>, quality: i32) {
     let mut thread_vec: Vec<JoinHandle<Result<(), ()>>> = vec![];
     for play_history in spotify_tracks {
@@ -50,14 +54,14 @@ pub async fn download_album_art_from_vec(spotify_tracks: Vec<PlayHistory>, quali
         });
     }
 }
+*/
 
 // deletes all the art work in image assets folder
 pub fn clear_image_assets() {
-    for entry in fs::read_dir(IMAGE_DIR).unwrap() {
+    for entry in fs::read_dir(get_image_dir()).unwrap() {
         fs::remove_file(entry.unwrap().path());
     }
 }
-
 
 pub fn create_gif_of_all() {
     const DELAY: u32 = 250;
@@ -72,6 +76,5 @@ pub fn create_gif_of_all() {
         let frame = Frame::from_parts(image, 0u32, 0u32, Delay::from_numer_denom_ms(DELAY, 1));
 
         gif_enc.encode_frame(frame);
-
     }
 }
