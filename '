@@ -78,16 +78,12 @@ pub fn clear_image_assets() {
 
 pub fn create_gif_of_all() {
     const DELAY: u32 = 250;
-
     let mut rng = rand::thread_rng();
     let y: f64 = rng.gen();
     let file_name = (y * 10000f64).to_string();
-
-    let gif_path = format!("{}Gifs/{}.gif", get_image_dir(), file_name);
+    let gif_path = format!("{}Gifs/", get_image_dir());
 
     let image = std::fs::File::create(gif_path).unwrap();
-
-
     let mut gif_enc = gif::GifEncoder::new_with_speed(image, 3);
     gif_enc.set_repeat(gif::Repeat::Infinite);
 
