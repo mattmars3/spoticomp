@@ -4,19 +4,16 @@ use rspotify::{prelude::*, AuthCodeSpotify};
 use rspotify_model::{TimeLimits, PlayHistory};
 use chrono::{DateTime, Utc, TimeZone, Duration};
 
-// for hashmap in the update file function
-use std::collections::HashMap;
-
 // for turning songs into json
 use serde_json::{to_string, to_string_pretty};
 
 // for writing json data to file
 use std::fs::{File, write, read_to_string};
 
+use crate::configuration::recently_played_path;
+
 // make this a config file thing
 // check if the file exists first
-const RECENT_SONG_PATH: &str = "Assets/recently_played_songs.json";
-const PLAYED_TIMES_REF: &str = "Assets/songs_play_times.json";
 
 // NOTE this does not include the current playing song
 // gets last x songs
@@ -76,11 +73,11 @@ pub async fn get_all_recent_songs(spotify_object: &AuthCodeSpotify) -> Vec<PlayH
 pub fn write_to_file(played_songs: Vec<PlayHistory>) {
     let songs_json = serde_json::to_string_pretty(&played_songs);
     let rec_played_string = songs_json.expect("unable to unwrap songs and parse to json");
-    write(RECENT_SONG_PATH, rec_played_string).unwrap();
+    write(recently_played_path(), rec_played_string).unwrap();
 }
 
 pub fn read_from_file() -> Vec<PlayHistory> {
-    let json_data: String = std::fs::read_to_string(RECENT_SONG_PATH).expect("Unable to read songs from recently played file");
+    let json_data: String = std::fs::read_to_string(recently_played_path()).expect("Unable to read songs from recently played file");
     let vec_of_songs: Vec<PlayHistory> = serde_json::from_str(&json_data).unwrap();
     vec_of_songs
 }
@@ -119,32 +116,3 @@ pub async fn update_recently_played(spotify_object: &AuthCodeSpotify) {
     println!("{} songs recorded in history.", file_and_recent_played.len());
     write_to_file(file_and_recent_played);
 }
-
-
-
-/* Functions
- *
- *  get x number of recently_played_songs
- *  get all recently played songs
- *
- *  turn PlayHistory vector into json 
- *  write json to file
- *
- *  read json from file
- *  turn json into PlayHistory
- *
- *  check for current playing song
- *
- *
-    get_x_recent_songs
-    get_all_recent_songs
-
-    song_vec_to_json
-    json_to_song_vec
-
-    write_to_file
-    read_from_file
- *
- *
- * */
-

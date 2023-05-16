@@ -30,7 +30,7 @@ rand = "0.8.5"
 chrono = "0.4.24"
 
 # genius lyrics
-genius-rust = "0.1.1"
+genius-rs = "0.5.0"
 
 # json support
 serde_json = "1.0.94"
@@ -47,3 +47,6 @@ reqwest = "0.11.14"
 
 # threadpools for downloading images 
 rayon = "1.7.0"
+
+# command line argument parser
+clap = {version = "4.2.7", features = ["derive"]}

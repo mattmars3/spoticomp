@@ -13,24 +13,9 @@ use std::collections::HashSet;
 // generate random state strings
 use random_string::generate;
 
+use crate::configuration::get_assets_dir;
+
 use env_logger;
-
-/*
-pub fn get_authcode_object(scopes: HashSet<String>) -> AuthCodeSpotify {
-    // create credentials object for authorization
-    let spotify_credentials: Credentials = Credentials::new();
-    let charset = "1234567890";
-
-    let spotify_oauth = OAuth {
-        redirect_uri: redirect_uri,
-        state: generate(10, charset),
-        scopes,
-        proxies: None
-    };
-    
-    AuthCodeSpotify::new(spotify_credentials, spotify_oauth)
-}
-*/
 
 pub async fn get_authcode() -> AuthCodeSpotify {
     // declare all scopes
@@ -59,15 +44,19 @@ pub async fn get_authcode() -> AuthCodeSpotify {
     let creds = Credentials::from_env().unwrap();
     let oauth = OAuth::from_env(api_scopes).unwrap();
 
+    let cached_token_path: PathBuf = (get_assets_dir() + DEFAULT_CACHE_PATH).into();
+
     let config = Config {
         token_cached: true,
         token_refreshing: true,
+        cache_path: cached_token_path,
         ..Config::default()
     };
 
     let spotify = AuthCodeSpotify::with_config(creds, oauth, config);
 
-    let cached_token = Token::from_cache(DEFAULT_CACHE_PATH);
+
+    let cached_token = Token::from_cache(get_assets_dir() + DEFAULT_CACHE_PATH);
     match cached_token {
         // if the token is already cached
         Ok(token) => {
@@ -84,7 +73,7 @@ pub async fn get_authcode() -> AuthCodeSpotify {
     };
 
     // cache the token for later use
-    spotify.write_token_cache();
+    spotify.write_token_cache().await;
 
     // return the authenticated spotify object
     spotify

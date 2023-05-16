@@ -1,4 +1,4 @@
-use album_art::download_album_art_from_vec;
+use album_art::download_album_art_from_track_vec;
 use rspotify::{AuthCodeSpotify, prelude::*};
 
 use rspotify_model::{FullTrack, PlayHistory};
@@ -15,22 +15,22 @@ mod popular_endpoints;
 mod album_art;
 mod lyrics;
 mod configuration;
+mod command_interface;
 
 #[tokio::main]
 async fn main() {
-    let spotify = authorize::get_authcode().await;
-    let track = popular_endpoints::current_playing_fulltrack(&spotify).await.unwrap();
-    album_art::download_album_art(album_art::get_links(&track), 2).await;
+    // let spotify = authorize::get_authcode().await;
+    let resp = lyrics::get_lyrics().await;
+    
 }
 
-async fn download_recent_songs(spotify: &AuthCodeSpotify) {
-    /*
-    let rec_songs = recently_played::get_all_recent_songs(&spotify).await;
-    let join = download_album_art_from_vec(rec_songs, 2);
-    rec_songs.iter().for_each(|item| println!("{:?}", item.track.album.images));
+fn write_to_file(content: String) {
+    std::fs::write("Assets/lyrics_test.json", content).unwrap();
+}
 
-    join!(join); 
-    */
+async fn download_rec_songs(spotify: &AuthCodeSpotify) {
+    let rec_songs = recently_played::get_all_recent_songs(&spotify).await.into_iter().map(|song| song.track).collect::<Vec<FullTrack>>();
+    album_art::download_album_art_from_track_vec(&rec_songs, 0).await;
 }
 
 async fn download_current_song_art(spotify: &AuthCodeSpotify) {

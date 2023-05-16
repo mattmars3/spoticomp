@@ -29,5 +29,8 @@ Features
 
 
 
+8-bit creator
+  (R^2 + G^2 + B^2) and whichever has the 
+
 
 

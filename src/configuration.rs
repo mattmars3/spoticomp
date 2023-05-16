@@ -12,7 +12,15 @@ pub fn get_config_value(key: &str) -> String {
     value
 }
 
+pub fn recently_played_path() -> String {
+    format!("{}recently_played.json", get_assets_dir())
+}
+
+pub fn get_assets_dir() -> String {
+    get_config_value("assets_path")
+}
+
+
 pub fn get_image_dir() -> String {
-    let image_dir: String = format!("{}Images/", get_config_value("assets_path"));
-    image_dir
+    format!("{}Images/", get_config_value("assets_path"))
 }
